@@ -3,6 +3,7 @@ import java.util.Arrays;
 
 public class cmsc401 {
     static int n;
+    static int count;
     //public static transmuteObject[] adjacencyList;
    // public static int[]
     public static MinHeap minheap;
@@ -21,6 +22,7 @@ public class cmsc401 {
     public static void main(String[] args) {
         Arrays.fill(mappingArray, -1);
         n = readInt();
+        count=n;
         scanner.nextLine();
         adjacencyMatrix = new int[n+1][n+1]; // maybe need to be just lastArrPos
         distanceArray = new int[n+1];
@@ -70,40 +72,77 @@ public class cmsc401 {
             }
     }
 
-    public static int dijkstra() {
-        int shortest = 0;
-        //int count = minheap.currentSize;
+    public static int dijkstra() {//give source to make sure we start silver,at end pick the id that matches with gold
+        int shortest = Integer.MAX_VALUE;
         distanceArray[0]=0;
-        while (!minheap.isEmpty()) {
-            HeapItem u = minheap.extractMin();
-                        // 1 1 1 1 1 1
-            shortest = u.getPriority();
-            //int count = n;
-            //int pos = mappingArray[u.getSource()];
-            for(int i=0;i<lastArrPos;i++) {
-                //relax(u.getSource(),u.getDest(),adjacencyMatrix[mappingArray[u.getSource()]][i]);
-                if(adjacencyMatrix[mappingArray[u.getId()]][i]!=Integer.MAX_VALUE) {
-                    //relax(u.getId(), adjacencyMatrix[mappingArray[u.getId()]][i],u.getPriority());
-                    relax(mappingArray[u.getId()],i,adjacencyMatrix[mappingArray[u.getId()]][i]);
+        int u = 0;
+        visitedArray[u]=false;
+       // while (!minheap.isEmpty()) {
+        while(count>0){
+            u = otherExtractMin(u);
+            for(int v=0;v<=n;v++){
+                if(adjacencyMatrix[u][v]!=Integer.MAX_VALUE){
+                    //distanceArray[v]=adjacencyMatrix[u][v]; do I update distance before calling relax?
+                    //if(visitedArray[v]==true) {
+                        relax(u, v, adjacencyMatrix[u][v]);
+                    //}
                 }
             }
-            visitedArray[mappingArray[u.getId()]] = false;
+            //visitedArray[u]=false;
 
+
+//            HeapItem u = minheap.extractMin();
+//
+//            shortest = u.getPriority();
+//            for(int i=0;i<lastArrPos;i++) {
+//                //relax(u.getSource(),u.getDest(),adjacencyMatrix[mappingArray[u.getSource()]][i]);
+//                if(adjacencyMatrix[mappingArray[u.getId()]][i]!=Integer.MAX_VALUE) {
+//                    //relax(u.getId(), adjacencyMatrix[mappingArray[u.getId()]][i],u.getPriority());
+//                    relax(mappingArray[u.getId()],i,adjacencyMatrix[mappingArray[u.getId()]][i]);
+//                }
+//            }
+//            visitedArray[mappingArray[u.getId()]] = false;
+//
         }
-        return shortest;
+    for(int i=0;i<distanceArray.length;i++){
+        if(shortest >distanceArray[i]){
+            shortest= distanceArray[i];
+        }
+    }
+       return shortest;
     }
 
     public static void relax(int distPos, int distPos2, int costXY){
-        //System.out.println(distanceArray[mappingArray[metalX]]+costXY +"hi");
-//        if(distanceArray[mappingArray[metalY]] > distanceArray[mappingArray[metalX]]+costXY){//adjacencyMatrix[mappingArray[metalY]][mappingArray[metalX]]
-//            distanceArray[mappingArray[metalY]] = distanceArray[mappingArray[metalX]]+costXY;
-//            minheap.decreaseKey(mappingArray[metalY],distanceArray[mappingArray[metalY]]);// new priority I get from matrix?
+        // is v considered u after second iteration or is it always v, the spot from index to the next vertex
+        // do I need logic to prevent going backwards? like from 28 to 29 and from 29 to 28 to prevent updates
+        //visitedArray[distPos]==true &&
+    if(distanceArray[distPos2]>distanceArray[distPos]+costXY){
+        System.out.println("distpos2 "+distPos2 +" dist1"+distPos +" cost"+costXY);
+        distanceArray[distPos2]=distanceArray[distPos]+costXY;
+        visitedArray[distPos2]=false;
+    }
+//        if(visitedArray[distPos]==true && distanceArray[distPos2]>distanceArray[distPos]+costXY){
+//            distanceArray[distPos2]=distanceArray[distPos]+costXY;
+//           // System.out.println(positionToMetal[distPos]);
+//            minheap.decreaseKey(positionToMetal[distPos2],distanceArray[distPos2]);
 //        }
-        if(visitedArray[distPos]==true && distanceArray[distPos]>distanceArray[distPos2]+costXY){
-            distanceArray[distPos]=distanceArray[distPos2]+costXY;
-            System.out.println(positionToMetal[distPos]);
-            minheap.decreaseKey(positionToMetal[distPos],distanceArray[distPos]);
+    }
+    public static int otherExtractMin(int u){
+        int min_dist =Integer.MAX_VALUE;
+        int min_dist_v =-1;// if statement if its not -1 update visited array
+        for(int v=0;v<=n;v++){
+            if(visitedArray[v]==true) {
+                if (distanceArray[v] <= min_dist) {
+                    min_dist = distanceArray[v];
+                    distanceArray[v]=min_dist;
+                    min_dist_v=v;
+                }
+            }
         }
+        visitedArray[min_dist_v]=false;
+        count--;
+        if(min_dist_v==-1) return u;
+        return min_dist_v;
     }
     private static Integer readInt() {
         return scanner.nextInt();
@@ -269,7 +308,7 @@ public class cmsc401 {
 //        idToPositionMap[node1.getSource()] = node2.getSource();
 //        idToPositionMap[node2.getSource()] = node1.getSource();
 //
-        idToPositionMap[node1.getMetalY()] = node2.getMetalY();
-        idToPositionMap[node2.getMetalY()] = node1.getMetalY();
+        //idToPositionMap[node1.getMetalY()] = node2.getMetalY();
+        //idToPositionMap[node2.getMetalY()] = node1.getMetalY();
     }
 }
