@@ -10,6 +10,7 @@ public class cmsc401 {
     public static int[][] adjacencyMatrix;
     public static int[] distanceArray;
     public static boolean[] visitedArray;
+    public static int[] positionToMetal;
     private static final Scanner scanner = new Scanner(System.in);
     public static int lastArrPos =0;
     public static HeapItem initalS =null;
@@ -24,10 +25,11 @@ public class cmsc401 {
         adjacencyMatrix = new int[n+1][n+1]; // maybe need to be just lastArrPos
         distanceArray = new int[n+1];
         visitedArray = new boolean[n+1];
+        positionToMetal= new int[n+1];
         minheap = new MinHeap(101);
         Arrays.fill(visitedArray,true);
         Arrays.fill(distanceArray,Integer.MAX_VALUE);
-        for (int[] row: adjacencyMatrix)
+        for (int[] row : adjacencyMatrix)
             Arrays.fill(row, Integer.MAX_VALUE);
         readNextInput(n);
     }
@@ -39,22 +41,26 @@ public class cmsc401 {
             int metalY = Integer.parseInt(parsedResponse[1]);
             int costXY = Integer.parseInt(parsedResponse[2]);
             if(metalX == 47) {
-                minheap.insert(47,0);
+                minheap.insert(47,0,metalY);
             }else{
-                minheap.insert(metalY,Integer.MAX_VALUE);
+                minheap.insert(metalX,Integer.MAX_VALUE,metalY);
             }
 
             if(mappingArray[metalX]==-1 && mappingArray[metalY]==-1) {
-                mappingArray[metalX] = lastArrPos++;
-                mappingArray[metalY] = lastArrPos++;
+                mappingArray[metalX] = lastArrPos;
+                positionToMetal[lastArrPos++]=metalX;
+                mappingArray[metalY] = lastArrPos;
+                positionToMetal[lastArrPos++]=metalY;
                 adjacencyMatrix[mappingArray[metalX]][mappingArray[metalY]] = costXY;
             }
             else if(mappingArray[metalX]!=-1 && mappingArray[metalY]==-1){
-                mappingArray[metalY]=lastArrPos++;
+                mappingArray[metalY]=lastArrPos;
+                positionToMetal[lastArrPos++]=metalY;
                 adjacencyMatrix[mappingArray[metalX]][mappingArray[metalY]] = costXY;
             }
             else if(mappingArray[metalX]==-1 && mappingArray[metalY]!=-1){
-                mappingArray[metalX]=lastArrPos++;
+                mappingArray[metalX]=lastArrPos;
+                positionToMetal[lastArrPos++]=metalX;
                 adjacencyMatrix[mappingArray[metalX]][mappingArray[metalY]] = costXY;
             }
             if(inCount>1)
@@ -66,28 +72,37 @@ public class cmsc401 {
 
     public static int dijkstra() {
         int shortest = 0;
-        int count = minheap.currentSize;
+        //int count = minheap.currentSize;
+        distanceArray[0]=0;
         while (!minheap.isEmpty()) {
             HeapItem u = minheap.extractMin();
-
+                        // 1 1 1 1 1 1
             shortest = u.getPriority();
+            //int count = n;
             //int pos = mappingArray[u.getSource()];
-            for(int i=0;i<=count;i++) {
+            for(int i=0;i<lastArrPos;i++) {
                 //relax(u.getSource(),u.getDest(),adjacencyMatrix[mappingArray[u.getSource()]][i]);
                 if(adjacencyMatrix[mappingArray[u.getId()]][i]!=Integer.MAX_VALUE) {
-                    relax(u.getId(), adjacencyMatrix[mappingArray[u.getId()]][i],u.getPriority());
+                    //relax(u.getId(), adjacencyMatrix[mappingArray[u.getId()]][i],u.getPriority());
+                    relax(mappingArray[u.getId()],i,adjacencyMatrix[mappingArray[u.getId()]][i]);
                 }
             }
-            visitedArray[mappingArray[u.getDest()]] =false;
+            visitedArray[mappingArray[u.getId()]] = false;
 
         }
         return shortest;
     }
 
-    public static void relax(int metalX, int metalY, int costXY){
-        if(distanceArray[mappingArray[metalY]] > distanceArray[mappingArray[metalX]]+costXY){//adjacencyMatrix[mappingArray[metalY]][mappingArray[metalX]]
-            distanceArray[mappingArray[metalY]] = distanceArray[mappingArray[metalX]]+costXY;
-            minheap.decreaseKey(mappingArray[metalY],distanceArray[mappingArray[metalY]]);
+    public static void relax(int distPos, int distPos2, int costXY){
+        //System.out.println(distanceArray[mappingArray[metalX]]+costXY +"hi");
+//        if(distanceArray[mappingArray[metalY]] > distanceArray[mappingArray[metalX]]+costXY){//adjacencyMatrix[mappingArray[metalY]][mappingArray[metalX]]
+//            distanceArray[mappingArray[metalY]] = distanceArray[mappingArray[metalX]]+costXY;
+//            minheap.decreaseKey(mappingArray[metalY],distanceArray[mappingArray[metalY]]);// new priority I get from matrix?
+//        }
+        if(visitedArray[distPos]==true && distanceArray[distPos]>distanceArray[distPos2]+costXY){
+            distanceArray[distPos]=distanceArray[distPos2]+costXY;
+            System.out.println(positionToMetal[distPos]);
+            minheap.decreaseKey(positionToMetal[distPos],distanceArray[distPos]);
         }
     }
     private static Integer readInt() {
@@ -102,10 +117,11 @@ public class cmsc401 {
 
 // @author: Touhid
  class HeapItem {
-    private int id, priority;
-    public HeapItem(int id, int priority) {
+    private int id, priority,metalY;
+    public HeapItem(int id, int priority,int metalY) {
         this.id = id;
         this.priority = priority;
+        this.metalY = metalY;
     }
     public int getId() {
         return id;
@@ -118,6 +134,12 @@ public class cmsc401 {
     }
     public void setPriority(int priority) {
         this.priority = priority;
+    }
+    public int getMetalY() {
+        return metalY;
+    }
+    public void setMetalY(int metalY) {
+        this.metalY = metalY;
     }
     @Override
     public String toString() {
@@ -172,9 +194,9 @@ public class cmsc401 {
         return currentSize <= 0;
     }
 
-    public void insert(int id, int priority) {
+    public void insert(int id, int priority,int metalY) {
         //myMinHeapArray[currentSize] = new HeapItem(source, destination, priority);
-        myMinHeapArray[currentSize] = new HeapItem(id,priority);
+        myMinHeapArray[currentSize] = new HeapItem(id,priority,metalY);
         idToPositionMap[lastId] = currentSize++;
         decreaseKey(lastId++, priority);
     }
@@ -247,7 +269,7 @@ public class cmsc401 {
 //        idToPositionMap[node1.getSource()] = node2.getSource();
 //        idToPositionMap[node2.getSource()] = node1.getSource();
 //
-//        idToPositionMap[node1.getDest()] = node2.getDest();
-//        idToPositionMap[node2.getDest()] = node1.getDest();
+        idToPositionMap[node1.getMetalY()] = node2.getMetalY();
+        idToPositionMap[node2.getMetalY()] = node1.getMetalY();
     }
 }
